@@ -7,8 +7,19 @@ services:
     environment:
       - ALLOW_EMPTY_PASSWORD=yes
       - MARIADB_SKIP_TEST_DB=yes
+    volumes:
+      - ./saml.sql:/docker-entrypoint-initdb.d/saml.sql
+    # This is needed only for connecting to mysql from the host. Not needed for production
+    # ports:
+    #   - "127.0.0.1:3306:3306"
   conformance_idp:
-    build: ./conformance_idp/.
+    env_file:
+      - ./.env
+    build:
+      context: ./conformance_idp/.
+      args:
+        - SSPHP_ADMIN_PASSWORD=$SSPHP_ADMIN_PASSWORD
+        - SSPHP_API_TOKEN=$SSPHP_API_TOKEN
     container_name: conformance_idp
     restart: always
     depends_on:
@@ -18,19 +29,37 @@ services:
       # TODO: - /path/to/metadata:/var/simplesamlphp/metadata:ro
       - public:/var/simplesamlphp/public
   reverseproxy:
-    image: bitnami/nginx:1.25
+    # image: bitnami/nginx:1.25
     container_name: reverseproxy
+    build: ./reverseproxy/.
     restart: always
     depends_on:
       - conformance_idp
     volumes:
       - ./conformance_idp.conf:/opt/bitnami/nginx/conf/server_blocks/conformance_idp.conf:ro
       - public:/var/simplesamlphp/public:ro
+      - ./certbot/www/:/var/www/certbot/:ro
+      - ./certbot/conf/:/opt/bitnami/nginx/ssl:ro
     ports:
       - "80:80"
-      # TODO: - "443:443"
+      - "443:443"
     environment:
       - NGINX_ENABLE_ABSOLUTE_REDIRECT=yes
+    #Return container status. If nginx is not running yet, or not returning HTTP 403 status code, the container will not be considered as being ready, thus, certbot container will not be executed.
+    healthcheck:
+      test: ["CMD-SHELL", "curl --silent --fail --output /dev/null -w '%{http_code}' http://localhost/ | grep -q '^403$'"]
+      interval: 10s
+      retries: 3
 
+  certbot:
+    image: certbot/certbot:latest
+    container_name: certbot
+    depends_on:
+      reverseproxy:
+        condition: service_healthy
+    volumes:
+      - ./certbot/www/:/var/www/certbot/:rw
+      - ./certbot/conf/:/etc/letsencrypt/:rw
+    command: certonly --webroot --webroot-path /var/www/certbot/ --agree-tos --email ${CERTBOT_EMAIL} --no-eff-email -d ${DOMAIN_NAME}
 volumes:
   public:
