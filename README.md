@@ -2,11 +2,11 @@
 
 To easily run the conformance IdP, you can use docker compose, but before that, a valid DNS record needs to be created in your DNS zone so that certbot could automatically generate TLS certificates for your Conformance IdP instance.
 After having DNS record created, please edit the .env file and replace variables as per your need. 
-<br />
-<br />SSPHP_ADMIN_PASSWORD - SimplesamlPHP portal administrative password
-<br />SSPHP_API_TOKEN - SimplesamlPHP administrative API token
-<br />DOMAIN_NAME - A valid FQDN your instance will be available at.
-<br />CERTBOT_EMAIL - an email you'll be receiving notifications from Letsencrypt to. The domain part of the email must be valid.
+
+* `SSPHP_ADMIN_PASSWORD` - SimplesamlPHP portal administrative password
+* `SSPHP_API_TOKEN` - SimplesamlPHP administrative API token
+* `DOMAIN_NAME` - A valid FQDN your instance will be available at.
+* `CERTBOT_EMAIL` - an email you'll be receiving notifications from Letsencrypt to. The domain part of the email must be valid.
 
 We strongly recommend replacing dfault credentials with new, complex ones.
 
@@ -15,6 +15,7 @@ After .env file variables are defined, you can build docker containers as follow
 ```shell
 cd docker
 docker compose up -d --build
+docker exec conformance_idp php /var/simplesamlphp/bin/initMDSPdo.php
 ```
 
 This will start SimpleSAMLphp at `http://DOMAIN_NAME/simplesaml/module.php/admin` with the conformance module installed,
@@ -27,9 +28,11 @@ If you need your SimplesamlPHP instance to be running on HTTPS, then check the c
 ```shell
 docker logs certbot
 ```
+
 After making sure that the certificates have been generated, the script ./apply_https.sh will help to configure reverseproxy container.
 
 Make the script executable and run it:
+
 ```shell
 chmod ug+x ./apply_https.sh
 ./apply_https.sh
