@@ -16,6 +16,7 @@ After .env file variables are defined, you can build docker containers as follow
 cd docker
 docker compose up -d --build
 docker exec conformance_idp php /var/simplesamlphp/bin/initMDSPdo.php
+docker exec conformance_idp php /var/simplesamlphp/modules/conformance/bin/install.php
 ```
 
 This will start SimpleSAMLphp at `http://DOMAIN_NAME/simplesaml/module.php/admin` with the conformance module installed,
