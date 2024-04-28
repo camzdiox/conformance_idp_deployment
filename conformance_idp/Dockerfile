@@ -47,7 +47,8 @@ RUN cd /var \
     && mkdir -p /tmp/cache/simplesamlphp \
     && sed -i "s/'session.cookie.secure' => true,/'session.cookie.secure' => false,/g" /var/simplesamlphp/config/config.php \
     && sed -i "s/'cachedir' => '\/var\/cache\/simplesamlphp',/'cachedir' => '\/tmp\/cache\/simplesamlphp',/g" /var/simplesamlphp/config/config.php \
-    && sed -i "s/'auth.adminpassword' => '123',/'auth.adminpassword' => '$SSPHP_ADMIN_PASSWORD',/g" /var/simplesamlphp/config/config.php
+    && sed -i "s/'auth.adminpassword' => '123',/'auth.adminpassword' => '$SSPHP_ADMIN_PASSWORD',/g" /var/simplesamlphp/config/config.php \
+    && sed -i "s/script-src 'self'/script-src 'self' 'unsafe-inline'/g" /var/simplesamlphp/config/config.php
 
 # install and enable conformance module
 RUN cd /var/simplesamlphp \
@@ -62,7 +63,7 @@ RUN cd /var/simplesamlphp \
     && sed -i "s/'database.password' => 'secret',/'database.password' => '',/" /var/simplesamlphp/config/config.php \
     && sed -i '/99 => .*core:LanguageAdaptor.*/a \        1000 => '\''conformance:Conformance'\'',' /var/simplesamlphp/config/config.php \
     && sed -i "/\['type' => 'flatfile'\],/a \        \['type' => 'pdo'\]," /var/simplesamlphp/config/config.php \
-    && sed -i "s|//\('strong-random-token-string' => 'Token description',\)|'strong-random-token-string' => '$SSPHP_API_TOKEN',|g" /var/simplesamlphp/config/module_conformance.php
+    && sed -i "s|ModuleConfiguration::OPTION_LOCAL_TEST_RUNNER_TOKEN => null,|ModuleConfiguration::OPTION_LOCAL_TEST_RUNNER_TOKEN => '$SSPHP_API_TOKEN',|g" /var/simplesamlphp/config/module_conformance.php
 
 # finalize
 
